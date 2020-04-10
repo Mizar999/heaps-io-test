@@ -1,6 +1,8 @@
 # Heaps.io Test
 
-A little project with Heaps.io
+A little project with [Heaps.io](https://heaps.io/)
+
+[GitHub page](https://mizar999.github.io/heaps-io-test/)
 
 ## Setup
 
