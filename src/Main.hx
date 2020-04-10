@@ -1,5 +1,3 @@
-import h3d.pass.Default;
-
 class Main extends hxd.App {
     var floor: Array<Array<Bool>>;
     var objects: Map<String, String>;
