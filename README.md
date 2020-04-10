@@ -4,7 +4,7 @@ A little project with [Heaps.io](https://heaps.io/)
 
 [GitHub page](https://mizar999.github.io/heaps-io-test/)
 
-## Setup
+## Project setup
 
 - Download & install the latest [Haxe 4 release](https://haxe.org/download/list/) version
 - Open a terminal to install heaps and SDL & OpenAL support with haxelib:
