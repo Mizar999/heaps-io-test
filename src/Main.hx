@@ -1,7 +1,8 @@
 class Main extends hxd.App {
     var floor: Array<Array<Bool>>;
-    var objects: Map<String, String>;
-    var player: {x: Int, y: Int}
+    var player: Entity;
+    var crates: Array<Entity>;
+    var targets: Array<Entity>;
 
     var spritesheet: h2d.Tile;
     var tiles: Array<h2d.Tile>;
@@ -49,9 +50,9 @@ class Main extends hxd.App {
             ['#','#','#','#','#','#','#','#','#','#','#','#']
         ];
 
-        objects = new Map<String, String>();
         floor = [];
-        player = {x: 0, y: 0};
+        crates = [];
+        targets = [];
         mapGroup = new h2d.TileGroup(spritesheet, s2d);
         var isFloor = false;
         for(y in 0...map.length) {
@@ -62,14 +63,11 @@ class Main extends hxd.App {
                     case ".":
                         { }
                     case "c":
-                            objects['${x};${y}'] = "crate";
+                        crates.push(new Entity(x, y));
                     case "x":
-                            objects['${x};${y}'] = "target";
+                        targets.push(new Entity(x, y));
                     case "@":
-                        {
-                            player.x = x;
-                            player.y = y;
-                        }
+                        player = new Entity(x, y);
                     default:
                         isFloor = false;
                 }
@@ -86,47 +84,49 @@ class Main extends hxd.App {
 
     function drawObjects() {
         objectGroup.clear();
-        
-        var x, y, tileIndex;
-        var arr: Array<String>;
-        for(pos => type in objects) {
-            arr = pos.split(";");
-            x = Std.parseInt(arr[0]);
-            y = Std.parseInt(arr[1]);
-            switch(type) {
-                case "crate":
-                    tileIndex = 35;
-                case "target":
-                    tileIndex = 120;
-                default:
-                    tileIndex = 1;
-            }
-            objectGroup.add(x * tileWidth, y * tileHeight, tiles[tileIndex]);
-        }
 
-        objectGroup.add(player.x * tileWidth, player.y * tileHeight, tiles[64]);
+        for(entity in targets) {
+            objectGroup.add(entity.position.x * tileWidth, entity.position.y * tileHeight, tiles[120]);
+        }
+        for(entity in crates) {
+            objectGroup.add(entity.position.x * tileWidth, entity.position.y * tileHeight, tiles[35]);
+        }
+        objectGroup.add(player.position.x * tileWidth, player.position.y * tileHeight, tiles[64]);
+    }
+
+    function reset() {
+        for(entity in targets) {
+            entity.position = entity.originalPosition.clone();
+        }
+        for(entity in crates) {
+            entity.position = entity.originalPosition.clone();
+        }
+        player.position = player.originalPosition.clone();
     }
 
     function onEvent(event: hxd.Event) {
         var isDirty = false;
         if(event.kind == EKeyDown) {
-            if(event.keyCode == hxd.Key.A || event.keyCode == hxd.Key.LEFT) {
-                player.x -= 1;
+            if(event.keyCode == hxd.Key.A || event.keyCode == hxd.Key.NUMPAD_4 || event.keyCode == hxd.Key.LEFT) {
+                player.position.x -= 1;
                 isDirty = true;
             }
-            if(event.keyCode == hxd.Key.D || event.keyCode == hxd.Key.RIGHT) {
-                player.x += 1;
+            if(event.keyCode == hxd.Key.D || event.keyCode == hxd.Key.NUMPAD_6 || event.keyCode == hxd.Key.RIGHT) {
+                player.position.x += 1;
                 isDirty = true;
             }
-            if(event.keyCode == hxd.Key.W || event.keyCode == hxd.Key.UP) {
-                player.y -= 1;
+            if(event.keyCode == hxd.Key.W || event.keyCode == hxd.Key.NUMPAD_8 || event.keyCode == hxd.Key.UP) {
+                player.position.y -= 1;
                 isDirty = true;
             }
-            if(event.keyCode == hxd.Key.S || event.keyCode == hxd.Key.DOWN) {
-                player.y += 1;
+            if(event.keyCode == hxd.Key.S || event.keyCode == hxd.Key.NUMPAD_2 || event.keyCode == hxd.Key.DOWN) {
+                player.position.y += 1;
                 isDirty = true;
             }
-            
+            if(event.keyCode == hxd.Key.R) {
+                reset();
+                isDirty = true;
+            }
         }
 
         if(isDirty) {
