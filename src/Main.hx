@@ -104,28 +104,60 @@ class Main extends hxd.App {
         player.position = player.originalPosition.clone();
     }
 
+    function isPassable(position: h3d.Vector, direction: h3d.Vector, ignoreCrates: Bool) {
+        var newPosition = position.add(direction);
+        var x = Std.int(newPosition.x);
+        var y = Std.int(newPosition.y);
+        var passable = floor[y][x];
+        if(!ignoreCrates) {
+            for(crate in crates) {
+                if(crate.position.x == newPosition.x && crate.position.y == newPosition.y) {
+                    passable = false;
+                    break;
+                }
+            }
+        }
+        return passable;
+
+    }
+
     function onEvent(event: hxd.Event) {
         var isDirty = false;
         if(event.kind == EKeyDown) {
-            if(event.keyCode == hxd.Key.A || event.keyCode == hxd.Key.NUMPAD_4 || event.keyCode == hxd.Key.LEFT) {
-                player.position.x -= 1;
-                isDirty = true;
-            }
-            if(event.keyCode == hxd.Key.D || event.keyCode == hxd.Key.NUMPAD_6 || event.keyCode == hxd.Key.RIGHT) {
-                player.position.x += 1;
-                isDirty = true;
-            }
-            if(event.keyCode == hxd.Key.W || event.keyCode == hxd.Key.NUMPAD_8 || event.keyCode == hxd.Key.UP) {
-                player.position.y -= 1;
-                isDirty = true;
-            }
-            if(event.keyCode == hxd.Key.S || event.keyCode == hxd.Key.NUMPAD_2 || event.keyCode == hxd.Key.DOWN) {
-                player.position.y += 1;
-                isDirty = true;
-            }
-            if(event.keyCode == hxd.Key.R) {
+            var direction: h3d.Vector = null;
+            if(event.keyCode == hxd.Key.A || event.keyCode == hxd.Key.NUMPAD_4 || event.keyCode == hxd.Key.LEFT)
+                direction = new h3d.Vector(-1, 0);
+            else if(event.keyCode == hxd.Key.D || event.keyCode == hxd.Key.NUMPAD_6 || event.keyCode == hxd.Key.RIGHT)
+                direction = new h3d.Vector(1, 0);
+            else if(event.keyCode == hxd.Key.W || event.keyCode == hxd.Key.NUMPAD_8 || event.keyCode == hxd.Key.UP)
+                direction = new h3d.Vector(0, -1);
+            else if(event.keyCode == hxd.Key.S || event.keyCode == hxd.Key.NUMPAD_2 || event.keyCode == hxd.Key.DOWN)
+                direction = new h3d.Vector(0, 1);
+            else if(event.keyCode == hxd.Key.R) {
                 reset();
                 isDirty = true;
+            }
+
+            if(direction != null && (direction.x != 0 || direction.y != 0)) {
+                if(isPassable(player.position, direction, true)) {
+                    var newPosition = player.position.add(direction);
+                    var blocked = false;
+                    for(crate in crates) {
+                        if(crate.position.x == newPosition.x && crate.position.y == newPosition.y) {
+                            if(isPassable(crate.position, direction, false)) {
+                                crate.position = crate.position.add(direction);
+                            } else {
+                                blocked = true;
+                            }
+                            break;
+                        }
+                    }
+
+                    if(!blocked) {
+                        player.position = newPosition;
+                        isDirty = true;
+                    }
+                }
             }
         }
 
