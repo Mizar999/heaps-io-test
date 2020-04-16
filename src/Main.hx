@@ -12,6 +12,12 @@ class Main extends hxd.App {
     var mapGroup: h2d.TileGroup;
     var objectGroup: h2d.TileGroup;
 
+    var font: h2d.Font;
+    var controlsText: h2d.Text;
+    var gameOverText: h2d.Text;
+
+    var isGameOver: Bool;
+
     static function main() {
         hxd.Res.initEmbed();
         new Main();
@@ -19,9 +25,21 @@ class Main extends hxd.App {
 
     override function init() {
         super.init();
-        initTiles();
-        createMap();
+        initGame();
+        startNewGame();
         hxd.Window.getInstance().addEventTarget(onEvent);
+    }
+
+    function initGame() {
+        initTiles();
+        initText();
+    }
+    
+    function startNewGame() {
+        createMap();
+        controlsText.text = "Move with arrow keys, press 'R' to reset.";
+        gameOverText.text = "";
+        isGameOver = false;
     }
 
     function initTiles() {
@@ -34,6 +52,18 @@ class Main extends hxd.App {
                 for(x in 0...Std.int(spritesheet.width / tileWidth))
                     spritesheet.sub(x * tileWidth, y * tileHeight, tileWidth, tileHeight)
         ];
+
+        mapGroup = new h2d.TileGroup(spritesheet, s2d);
+        objectGroup = new h2d.TileGroup(spritesheet, s2d);
+    }
+
+    function initText() {
+        font = hxd.res.DefaultFont.get();
+        controlsText = new h2d.Text(font);
+        s2d.addChild(controlsText);
+
+        gameOverText = new h2d.Text(font);
+        s2d.addChild(gameOverText);
     }
 
     function createMap() {
@@ -53,7 +83,7 @@ class Main extends hxd.App {
         floor = [];
         crates = [];
         targets = [];
-        mapGroup = new h2d.TileGroup(spritesheet, s2d);
+        mapGroup.clear();
         var isFloor = false;
         for(y in 0...map.length) {
             floor.push([]);
@@ -77,14 +107,11 @@ class Main extends hxd.App {
                 floor[y].push(isFloor);
             }
         }
-
-        objectGroup = new h2d.TileGroup(spritesheet, s2d);
         drawObjects();
     }
 
     function drawObjects() {
         objectGroup.clear();
-
         for(entity in targets) {
             objectGroup.add(entity.position.x * tileWidth, entity.position.y * tileHeight, tiles[120]);
         }
@@ -102,6 +129,31 @@ class Main extends hxd.App {
             entity.position = entity.originalPosition.clone();
         }
         player.position = player.originalPosition.clone();
+    }
+
+    function checkGameOver() {
+        var foundCrate: Bool;
+        for(target in targets) {
+            foundCrate = false;
+
+            for(crate in crates) {
+                if(crate.position.x == target.position.x && crate.position.y == target.position.y) {
+                    foundCrate = true;
+                    break;
+                }
+            }
+
+            if(!foundCrate)
+                return false;
+        }
+        return true;
+    }
+
+    function gameOver() {
+        isGameOver = true;
+        gameOverText.text = "You win! Press 'RETURN' to start again.";
+        var textBounds = controlsText.getBounds();
+        gameOverText.y = textBounds.y + textBounds.height + (gameOverText.textHeight / 2);
     }
 
     function isPassable(position: h3d.Vector, direction: h3d.Vector, ignoreCrates: Bool) {
@@ -124,6 +176,12 @@ class Main extends hxd.App {
     function onEvent(event: hxd.Event) {
         var isDirty = false;
         if(event.kind == EKeyDown) {
+            if(isGameOver) {
+                if(event.keyCode == hxd.Key.ENTER || event.keyCode == hxd.Key.NUMPAD_ENTER || event.keyCode == hxd.Key.R)
+                    startNewGame();
+                return;
+            }
+
             var direction: h3d.Vector = null;
             if(event.keyCode == hxd.Key.A || event.keyCode == hxd.Key.NUMPAD_4 || event.keyCode == hxd.Key.LEFT)
                 direction = new h3d.Vector(-1, 0);
@@ -163,6 +221,8 @@ class Main extends hxd.App {
 
         if(isDirty) {
             drawObjects();
+            if(checkGameOver())
+                gameOver();
         }
     }
 }
